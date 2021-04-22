@@ -5,17 +5,19 @@
  */
 const values = [...'23456789tjqka'];
 values.unshift(undefined) /* 0 is the 'lower ace' rank */;
+const readableValues = [...' 23456789', '10', ...'JQKA'];
 
 /**
  * d = diamonds (♦), c = clubs (♣), h = hearts (♥), s = spades (♠)
  */
 const suits = [...'dchs'];
+const suitSymbols = ['\u2666', '\u2663', '\u2665', '\u2660'];
 const toRank = cardValue => values.indexOf(cardValue);
 
 /**A card. 
  *@param vs {string}  card value and suit  
  */
-const card = (vs) => {
+const Card = (vs) => {
     vs = vs.toLowerCase();
     const value = vs[0]
     const suit = vs[1];
@@ -25,10 +27,14 @@ const card = (vs) => {
     if (vs.length !== 2) throw new Error(`Invalid card: ${vs}`);
 
     const vOf = toRank(value);
+    const suitSymbol = suitSymbols[suits.indexOf(suit)];
+    const readableValue = readableValues[values.indexOf(value)];
 
     return {
         get value() { return value; },
         get suit() { return suit; },
+        get suitSymbol() { return suitSymbol; },
+        get readableValue() { return readableValue; },
         toString() { return `${vs}`; },
         valueOf() { return vOf; },
         compareTo(c) {
@@ -46,7 +52,7 @@ const cards = [];
 for (const v of values) {
     if (!v) continue;
     for (const s of suits) {
-        cards.push(card(`${v}${s}`));
+        cards.push(Card(`${v}${s}`));
     }
 }
 
@@ -72,7 +78,7 @@ const shuffle = deadCards => {
 
 //group and sort cards
 const groupCards = (...cards) => {
-    cards = cards.map(c => (typeof c === 'string') ? card(c) : c);
+    cards = cards.map(c => (typeof c === 'string') ? Card(c) : c);
     cards.sort((c1, c2) => c1.compareTo(c2));
 
     let v = {};
@@ -302,7 +308,7 @@ const parseResult = (hand, ...cards) => {
  */
 const singleRun = (pocketCardArr, communityCards = []) => {
     if (!pocketCardArr) throw new Error("Pocket cards cannot be undefined");
-    let deadCards = [...pocketCardArr, ...communityCards].flat().filter(v => v).map(v => typeof v === 'string' ? card(v) : v);
+    let deadCards = [...pocketCardArr, ...communityCards].flat().filter(v => v).map(v => typeof v === 'string' ? Card(v) : v);
     const deck = shuffle(deadCards);
 
     //complete pocket cards
@@ -318,7 +324,7 @@ const singleRun = (pocketCardArr, communityCards = []) => {
                     break;
                 case 'string':
                     //convert to card
-                    pc[j] = card(pc[j]);
+                    pc[j] = Card(pc[j]);
                     break;
             }
         }
@@ -333,7 +339,7 @@ const singleRun = (pocketCardArr, communityCards = []) => {
                 break;
             case 'string':
                 //convert to card
-                communityCards[i] = card(communityCards[i]);
+                communityCards[i] = Card(communityCards[i]);
                 break;
         }
     }
@@ -371,7 +377,7 @@ const simulateGames = (pocketCardArr, communityCards = [], iterations = 10_000, 
     } while (cnt < iterations);
 
     result.iterations = cnt;
-    result.strength = result.strength.map((v,i) => pocketCardArr[i] && pocketCardArr[i].length ? v / cnt : undefined /* dummy player */);
+    result.strength = result.strength.map((v, i) => pocketCardArr[i] && pocketCardArr[i].length ? v / cnt : undefined /* dummy player */);
     return result;
 }
 
